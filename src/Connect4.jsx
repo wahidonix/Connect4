@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Connect4.css';
 
@@ -14,6 +14,9 @@ const Connect4 = () => {
     const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
     const [isAnimating, setIsAnimating] = useState(false);
 
+    // Ref to store the AI timeout ID
+    const aiTimeoutRef = useRef(null);
+
     useEffect(() => {
         const handleResize = () => {
             setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -23,13 +26,6 @@ const Connect4 = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Reset game state when returning to the main menu
-    useEffect(() => {
-        if (gameMode === 'menu') {
-            resetGame();
-        }
-    }, [gameMode]);
-
     const cellSize = Math.min(windowSize.width / (COLS + 2), windowSize.height / (ROWS + 4));
 
     const resetGame = () => {
@@ -38,6 +34,12 @@ const Connect4 = () => {
         setWinner(null);
         setWinningCells([]);
         setIsAnimating(false);
+
+        // Clear any pending AI moves
+        if (aiTimeoutRef.current) {
+            clearTimeout(aiTimeoutRef.current);
+            aiTimeoutRef.current = null;
+        }
     };
 
     const checkWinner = (row, col) => {
@@ -134,7 +136,7 @@ const Connect4 = () => {
         if (validColumns.length === 0) return; // Board is full
         const randomCol = validColumns[Math.floor(Math.random() * validColumns.length)];
         // Adding a slight delay to mimic thinking
-        setTimeout(() => {
+        aiTimeoutRef.current = setTimeout(() => {
             handleColumnClick(randomCol, true);
         }, 500);
     };
@@ -147,18 +149,34 @@ const Connect4 = () => {
                 aiMove();
             }
         }
+        // Cleanup AI timeout when unmounting or changing game modes
+        return () => {
+            if (aiTimeoutRef.current) {
+                clearTimeout(aiTimeoutRef.current);
+                aiTimeoutRef.current = null;
+            }
+        };
     }, [currentPlayer, isAnimating, winner, gameMode]);
 
     const MainMenu = () => (
         <div className="main-menu">
             <h1>Connect 4</h1>
-            <button onClick={() => setGameMode('pvp')}>
+            <button onClick={() => {
+                resetGame();
+                setGameMode('pvp');
+            }}>
                 Player vs Player
             </button>
-            <button onClick={() => setGameMode('pve')}>
+            <button onClick={() => {
+                resetGame();
+                setGameMode('pve');
+            }}>
                 Player vs AI
             </button>
-            <button onClick={() => setGameMode('eve')}>
+            <button onClick={() => {
+                resetGame();
+                setGameMode('eve');
+            }}>
                 AI vs AI
             </button>
         </div>
@@ -224,7 +242,12 @@ const Connect4 = () => {
                 <button onClick={resetGame}>
                     Reset Game
                 </button>
-                <button onClick={() => setGameMode('menu')}>
+                <button
+                    onClick={() => {
+                        resetGame();
+                        setGameMode('menu');
+                    }}
+                >
                     Main Menu
                 </button>
             </div>
