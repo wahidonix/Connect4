@@ -244,8 +244,7 @@ const Connect4 = () => {
                     AI vs AI
                 </label>
             </div>
-            {(selectedGameMode === 'pve' ||
-                selectedGameMode === 'eve') && (
+            {(selectedGameMode === 'pve' || selectedGameMode === 'eve') && (
                 <div className="ai-difficulty-selection">
                     <h2>Select AI Difficulty:</h2>
                     <label>
@@ -274,6 +273,15 @@ const Connect4 = () => {
                             onChange={() => setAiDifficulty('hard')}
                         />
                         Hard
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            value="expert"
+                            checked={aiDifficulty === 'expert'}
+                            onChange={() => setAiDifficulty('expert')}
+                        />
+                        Expert
                     </label>
                 </div>
             )}
@@ -323,9 +331,7 @@ const Connect4 = () => {
                                     width: cellSize,
                                     height: cellSize,
                                 }}
-                                onClick={() =>
-                                    handleColumnClick(colIndex)
-                                }
+                                onClick={() => handleColumnClick(colIndex)}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                             >
@@ -362,8 +368,7 @@ const Connect4 = () => {
                                 </AnimatePresence>
                                 {winningCells.some(
                                     ([r, c]) =>
-                                        r === rowIndex &&
-                                        c === colIndex
+                                        r === rowIndex && c === colIndex
                                 ) && (
                                     <motion.div
                                         className="winning-piece"
