@@ -27,10 +27,13 @@ const Connect4 = () => {
     const [aiDifficultyYellow, setAiDifficultyYellow] = useState('easy');
     const aiTimeoutRef = useRef(null);
 
-    // New state for move history
     const [moveHistory, setMoveHistory] = useState([]);
     const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
     const [isReviewMode, setIsReviewMode] = useState(false);
+
+    // New state for cheat feature
+    const [isCheatMode, setIsCheatMode] = useState(false);
+    const [winningMove, setWinningMove] = useState(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -65,6 +68,7 @@ const Connect4 = () => {
         setMoveHistory([]);
         setCurrentMoveIndex(-1);
         setIsReviewMode(false);
+        setWinningMove(null);
 
         if (aiTimeoutRef.current) {
             clearTimeout(aiTimeoutRef.current);
@@ -72,7 +76,7 @@ const Connect4 = () => {
         }
     };
 
-    const checkWinner = (row, col) => {
+    const checkWinner = (row, col, currentBoard = board) => {
         const directions = [
             [0, 1],
             [1, 0],
@@ -92,7 +96,7 @@ const Connect4 = () => {
                     newRow < ROWS &&
                     newCol >= 0 &&
                     newCol < COLS &&
-                    board[newRow][newCol]?.color === currentPlayer
+                    currentBoard[newRow][newCol]?.color === currentBoard[row][col]?.color
                 ) {
                     count++;
                     cells.push([newRow, newCol]);
@@ -109,7 +113,7 @@ const Connect4 = () => {
                     newRow < ROWS &&
                     newCol >= 0 &&
                     newCol < COLS &&
-                    board[newRow][newCol]?.color === currentPlayer
+                    currentBoard[newRow][newCol]?.color === currentBoard[row][col]?.color
                 ) {
                     count++;
                     cells.push([newRow, newCol]);
@@ -119,11 +123,10 @@ const Connect4 = () => {
             }
 
             if (count >= 4) {
-                setWinningCells(cells);
-                return true;
+                return cells; // Return the winning cells instead of setting them directly
             }
         }
-        return false;
+        return null; // Return null if no winning combination is found
     };
 
     const checkDraw = (board) => {
@@ -157,10 +160,14 @@ const Connect4 = () => {
                 setMoveHistory((prevHistory) => [...prevHistory, newBoard]);
                 setCurrentMoveIndex((prevIndex) => prevIndex + 1);
 
-                if (checkWinner(row, col)) {
+                const winningCells = checkWinner(row, col, newBoard);
+                if (winningCells) {
                     setWinner(currentPlayer);
+                    setWinningCells(winningCells);
                 } else if (checkDraw(newBoard)) {
                     setIsDraw(true);
+                } else {
+                    setWinningCells([]); // Reset winning cells if no win is found
                 }
 
                 setTimeout(() => {
@@ -255,6 +262,33 @@ const Connect4 = () => {
             return `${color.charAt(0).toUpperCase() + color.slice(1)} Player`;
         }
     };
+
+    // New function to check for winning move
+    const checkForWinningMove = (player) => {
+        for (let col = 0; col < COLS; col++) {
+            const tempBoard = board.map(row => [...row]);
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (!tempBoard[row][col]) {
+                    tempBoard[row][col] = { color: player };
+                    if (checkWinner(row, col, tempBoard)) {
+                        return col;
+                    }
+                    break;
+                }
+            }
+        }
+        return null;
+    };
+
+    // Effect for cheat mode
+    useEffect(() => {
+        if (isCheatMode && !winner && !isDraw) {
+            const winningCol = checkForWinningMove(currentPlayer);
+            setWinningMove(winningCol);
+        } else {
+            setWinningMove(null);
+        }
+    }, [board, currentPlayer, isCheatMode, winner, isDraw]);
 
     const MainMenu = () => (
         <div className="main-menu">
@@ -413,240 +447,253 @@ const Connect4 = () => {
                             name="aiDifficultyYellow"
                             value="expert"
                             checked={aiDifficultyYellow === 'expert'}
-                            onChange={() => setAiDifficultyYellow('expert')}
-                        />
-                        Expert
-                    </label>
-                </div>
-            )}
-
-            <button
-                onClick={() => {
-                    resetGame();
-                    setGameMode(selectedGameMode);
-                }}
-            >
-                Start Game
-            </button>
-        </div>
-    );
-
-    const GameBoard = () => {
-        const isMobile = windowSize.width <= 600;
-        const [isMoveLogOpen, setIsMoveLogOpen] = useState(false);
-
-        const MoveLog = () => (
-            <div className="move-log">
-                <h3>Move Log</h3>
-                <ul>
-                    {moves.map((move) => (
-                        <li key={move.moveNumber}>
-                            Move {move.moveNumber}: {getPlayerName(move.player)} placed in column{' '}
-                            {move.col + 1}
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        );
-
-        const MoveNavigation = () => (
-            <div className="move-navigation">
-                <button
-                    onClick={() => {
-                        setCurrentMoveIndex(0);
-                        setBoard(moveHistory[0]);
-                    }}
-                    disabled={currentMoveIndex === 0}
-                >First
-                </button>
-                <button
-                    onClick={() => {
-                        setCurrentMoveIndex((prevIndex) => {
-                            const newIndex = Math.max(0, prevIndex - 1);
-                            setBoard(moveHistory[newIndex]);
-                            return newIndex;
-                        });
-                    }}
-                    disabled={currentMoveIndex === 0}
-                >
-                    Previous
-                </button>
-                <button
-                    onClick={() => {
-                        setCurrentMoveIndex((prevIndex) => {
-                            const newIndex = Math.min(moveHistory.length - 1, prevIndex + 1);
-                            setBoard(moveHistory[newIndex]);
-                            return newIndex;
-                        });
-                    }}
-                    disabled={currentMoveIndex === moveHistory.length - 1}
-                >
-                    Next
-                </button>
-                <button
-                    onClick={() => {
-                        setCurrentMoveIndex(moveHistory.length - 1);
-                        setBoard(moveHistory[moveHistory.length - 1]);
-                    }}
-                    disabled={currentMoveIndex === moveHistory.length - 1}
-                >
-                    Last
-                </button>
-            </div>
-        );
-
-        return (
-            <div className="game-board">
-                <h2>
-                    {winner
-                        ? `${getPlayerName(winner)} Wins!`
-                        : isDraw
-                        ? "It's a draw!"
-                        : `Current Player: ${getPlayerName(currentPlayer)}`}
-                </h2>
-                <div className="game-content">
-                    <div
-                        className="board"
-                        style={{
-                            padding: cellSize / 2,
-                            maxWidth: cellSize * COLS + cellSize,
-                            maxHeight: cellSize * ROWS + cellSize,
-                        }}
-                    >
-                        {board.map((row, rowIndex) => (
-                            <div key={rowIndex} className="row">
-                                {row.map((cell, colIndex) => (
-                                    <motion.div
-                                        key={colIndex}
-                                        className="cell"
-                                        style={{
-                                            width: cellSize,
-                                            height: cellSize,
-                                        }}
-                                        onClick={() => handleColumnClick(colIndex)}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                    >
-                                        <AnimatePresence>
-                                            {cell && (
-                                                <motion.div
-                                                    key={`${rowIndex}-${colIndex}`}
-                                                    className={`piece ${cell.color}`}
-                                                    style={{
-                                                        width: cellSize * 0.8,
-                                                        height: cellSize * 0.8,
-                                                    }}
-                                                    initial={
-                                                        cell.isNew
-                                                            ? {
-                                                                  y: -windowSize.height,
-                                                                  scale: 0.5,
-                                                              }
-                                                            : { scale: 1 }
-                                                    }
-                                                    animate={{ y: 0, scale: 1 }}
-                                                    exit={{ scale: 0 }}
-                                                    transition={
-                                                        cell.isNew
-                                                            ? {
-                                                                  type: 'spring',
-                                                                  stiffness: 300,
-                                                                  damping: 30,
-                                                              }
-                                                            : { duration: 0.2 }
-                                                    }
-                                                />
-                                            )}
-                                        </AnimatePresence>
-                                        {winningCells.some(
-                                            ([r, c]) =>
-                                                r === rowIndex && c === colIndex
-                                        ) && (
-                                            <motion.div
-                                                className="winning-piece"
-                                                style={{
-                                                    width: cellSize * 0.8,
-                                                    height: cellSize * 0.8,
-                                                }}
-                                                initial={{ scale: 0 }}
-                                                animate={{
-                                                    scale: [0, 1.2, 1],
-                                                }}
-                                                transition={{
-                                                    duration: 0.5,
-                                                    times: [0, 0.6, 1],
-                                                }}
-                                            />
-                                        )}
-                                    </motion.div>
-                                ))}
-                            </div>
-                        ))}
+                            onChange={() => setAiDifficultyYellow('expert')}/>
+                            Expert
+                        </label>
                     </div>
-                    {!isMobile && <MoveLog />}
-                </div>
-                {isMobile && (
-                    <>
-                        <button onClick={() => setIsMoveLogOpen(true)}>Show Move Log</button>
-                        {isMoveLogOpen && (
-                            <div
-                                className="modal-overlay"
-                                onClick={() => setIsMoveLogOpen(false)}
-                            >
-                                <div
-                                    className="modal-content"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <MoveLog />
-                                    <button onClick={() => setIsMoveLogOpen(false)}>
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </>
                 )}
-                <div className="controls">
-                    <button onClick={resetGame}>Reset Game</button>
+    
+                <button
+                    onClick={() => {
+                        resetGame();
+                        setGameMode(selectedGameMode);
+                    }}
+                >
+                    Start Game
+                </button>
+            </div>
+        );
+    
+        const GameBoard = () => {
+            const isMobile = windowSize.width <= 768;
+            const [isMoveLogOpen, setIsMoveLogOpen] = useState(false);
+        
+            const MoveLog = () => (
+                <div className="move-log">
+                    <h3>Move Log</h3>
+                    <ul>
+                        {moves.map((move) => (
+                            <li key={move.moveNumber}>
+                                Move {move.moveNumber}: {getPlayerName(move.player)} placed in column {move.col + 1}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        
+            const MoveNavigation = () => (
+                <div className="move-navigation">
                     <button
                         onClick={() => {
-                            resetGame();
-                            setGameMode('menu');
+                            setCurrentMoveIndex(0);
+                            setBoard(moveHistory[0]);
                         }}
+                        disabled={currentMoveIndex === 0}
                     >
-                        Main Menu
+                        First
                     </button>
-                    {(winner || isDraw) && (
-                        <button onClick={() => setIsReviewMode(true)}>
-                            Review Game
-                        </button>
-                    )}
-                </div>
-                {isReviewMode && (
-                    <div className="review-mode">
-                        <h3>Review Mode</h3>
-                        <MoveNavigation />
-                        <button onClick={() => {
-                            setIsReviewMode(false);
+                    <button
+                        onClick={() => {
+                            setCurrentMoveIndex((prevIndex) => {
+                                const newIndex = Math.max(0, prevIndex - 1);
+                                setBoard(moveHistory[newIndex]);
+                                return newIndex;
+                            });
+                        }}
+                        disabled={currentMoveIndex === 0}
+                    >
+                        Previous
+                    </button>
+                    <button
+                        onClick={() => {
+                            setCurrentMoveIndex((prevIndex) => {
+                                const newIndex = Math.min(moveHistory.length - 1, prevIndex + 1);
+                                setBoard(moveHistory[newIndex]);
+                                return newIndex;
+                            });
+                        }}
+                        disabled={currentMoveIndex === moveHistory.length - 1}
+                    >
+                        Next
+                    </button>
+                    <button
+                        onClick={() => {
                             setCurrentMoveIndex(moveHistory.length - 1);
                             setBoard(moveHistory[moveHistory.length - 1]);
-                        }}>
-                            Exit Review Mode
-                        </button>
+                        }}
+                        disabled={currentMoveIndex === moveHistory.length - 1}
+                    >
+                        Last
+                    </button>
+                </div>
+            );
+        
+            return (
+                <div className="game-board">
+                    <h2>
+                        {winner
+                            ? `${getPlayerName(winner)} Wins!`
+                            : isDraw
+                            ? "It's a draw!"
+                            : `Current Player: ${getPlayerName(currentPlayer)}`}
+                    </h2>
+                    <div className="game-content">
+                        {isReviewMode && (
+                            <div className="review-mode">
+                                <h3>Review Mode</h3>
+                                <MoveNavigation />
+                                <button onClick={() => {
+                                    setIsReviewMode(false);
+                                    setCurrentMoveIndex(moveHistory.length - 1);
+                                    setBoard(moveHistory[moveHistory.length - 1]);
+                                }}>
+                                    Exit Review Mode
+                                </button>
+                            </div>
+                        )}
+                        <div className="game-area">
+                            <div
+                                className="board"
+                                style={{
+                                    padding: cellSize / 2,
+                                    maxWidth: cellSize * COLS + cellSize,
+                                    maxHeight: cellSize * ROWS + cellSize,
+                                }}
+                            >
+                                {board.map((row, rowIndex) => (
+                                    <div key={rowIndex} className="row">
+                                        {row.map((cell, colIndex) => (
+                                            <motion.div
+                                                key={colIndex}
+                                                className="cell"
+                                                style={{
+                                                    width: cellSize,
+                                                    height: cellSize,
+                                                }}
+                                                onClick={() => handleColumnClick(colIndex)}
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                <AnimatePresence>
+                                                    {cell && (
+                                                        <motion.div
+                                                            key={`${rowIndex}-${colIndex}`}
+                                                            className={`piece ${cell.color}`}
+                                                            style={{
+                                                                width: cellSize * 0.8,
+                                                                height: cellSize * 0.8,
+                                                            }}
+                                                            initial={
+                                                                cell.isNew
+                                                                    ? {
+                                                                          y: -windowSize.height,
+                                                                          scale: 0.5,
+                                                                      }
+                                                                    : { scale: 1 }
+                                                            }
+                                                            animate={{ y: 0, scale: 1 }}
+                                                            exit={{ scale: 0 }}
+                                                            transition={
+                                                                cell.isNew
+                                                                    ? {
+                                                                          type: 'spring',
+                                                                          stiffness: 300,
+                                                                          damping: 30,
+                                                                      }
+                                                                    : { duration: 0.2 }
+                                                            }
+                                                        />
+                                                    )}
+                                                </AnimatePresence>
+                                                {winningCells.some(
+                                                    ([r, c]) =>
+                                                        r === rowIndex && c === colIndex
+                                                ) && (
+                                                    <motion.div
+                                                        className="winning-piece"
+                                                        style={{
+                                                            width: cellSize * 0.8,
+                                                            height: cellSize * 0.8,
+                                                        }}
+                                                        initial={{ scale: 0 }}
+                                                        animate={{
+                                                            scale: [0, 1.2, 1],
+                                                        }}
+                                                        transition={{
+                                                            duration: 0.5,
+                                                            times: [0, 0.6, 1],
+                                                        }}
+                                                    />
+                                                )}
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="controls">
+                                <button onClick={resetGame}>Reset Game</button>
+                                <button
+                                    onClick={() => {
+                                        resetGame();
+                                        setGameMode('menu');
+                                    }}
+                                >
+                                    Main Menu
+                                </button>
+                                {(winner || isDraw) && (
+                                    <button onClick={() => setIsReviewMode(true)}>
+                                        Review Game
+                                    </button>
+                                )}
+                                <button onClick={() => setIsCheatMode(!isCheatMode)}>
+                                    {isCheatMode ? 'Disable Cheat' : 'Enable Cheat'}
+                                </button>
+                            </div>
+                            {isCheatMode && (
+                                <div className="cheat-info">
+                                    {winningMove !== null ? (
+                                        <p>Winning move available in column {winningMove + 1}</p>
+                                    ) : (
+                                        <p>No winning move available</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        {!isMobile && <MoveLog />}
                     </div>
+                    {isMobile && (
+                        <>
+                            <button onClick={() => setIsMoveLogOpen(true)}>Show Move Log</button>
+                            {isMoveLogOpen && (
+                                <div
+                                    className="modal-overlay"
+                                    onClick={() => setIsMoveLogOpen(false)}
+                                >
+                                    <div
+                                        className="modal-content"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <MoveLog />
+                                        <button onClick={() => setIsMoveLogOpen(false)}>
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            );
+        };
+    
+        return (
+            <div className="connect4">
+                {gameMode === 'menu' && <MainMenu />}
+                {(gameMode === 'pvp' || gameMode === 'pve' || gameMode === 'eve') && (
+                    <GameBoard />
                 )}
             </div>
         );
     };
-
-    return (
-        <div className="connect4">
-            {gameMode === 'menu' && <MainMenu />}
-            {(gameMode === 'pvp' || gameMode === 'pve' || gameMode === 'eve') && (
-                <GameBoard />
-            )}
-        </div>
-    );
-};
-
-export default Connect4;
+    
+    export default Connect4;
