@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { GAME_MODES, AI_DIFFICULTY } from './constants';
+import { AI_DIFFICULTY } from './constants';
 import { getAvailableColumns } from './utils';
 
 export const useWindowSize = () => {
@@ -28,8 +28,25 @@ export const useAIMove = (board, currentPlayer, gameMode, aiDifficultyRed, aiDif
     const [thinkingTime, setThinkingTime] = useState(0);
     const thinkingIntervalRef = useRef(null);
     const aiTimeoutRef = useRef(null);
+    const abortControllerRef = useRef(null);
+
+    const cancelAIMove = useCallback(() => {
+        if (aiTimeoutRef.current) {
+            clearTimeout(aiTimeoutRef.current);
+        }
+        if (thinkingIntervalRef.current) {
+            clearInterval(thinkingIntervalRef.current);
+        }
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        setAiThinking(false);
+        setThinkingTime(0);
+    }, []);
 
     const aiMove = useCallback(async (handleColumnClick) => {
+        cancelAIMove();
+
         setAiThinking(true);
         setThinkingTime(0);
         thinkingIntervalRef.current = setInterval(() => {
@@ -41,6 +58,7 @@ export const useAIMove = (board, currentPlayer, gameMode, aiDifficultyRed, aiDif
 
         aiTimeoutRef.current = setTimeout(async () => {
             try {
+                abortControllerRef.current = new AbortController();
                 const response = await fetch('https://connect4-api.vahidr.com/ai-move', {
                     method: 'POST',
                     headers: {
@@ -51,7 +69,9 @@ export const useAIMove = (board, currentPlayer, gameMode, aiDifficultyRed, aiDif
                         aiDifficulty: difficulty,
                         aiColor: currentPlayer,
                     }),
+                    signal: abortControllerRef.current.signal,
                 });
+
                 const data = await response.json();
                 const aiSelectedColumn = data.column;
 
@@ -59,36 +79,27 @@ export const useAIMove = (board, currentPlayer, gameMode, aiDifficultyRed, aiDif
                     handleColumnClick(aiSelectedColumn, true);
                 } else {
                     console.error('Invalid AI move received from server');
-                    // Fallback to random move if API fails
-                    const availableColumns = getAvailableColumns(board);
-                    const randomColumn = availableColumns[Math.floor(Math.random() * availableColumns.length)];
-                    handleColumnClick(randomColumn, true);
+                    fallbackToRandomMove(board, handleColumnClick);
                 }
             } catch (error) {
-                console.error('Error fetching AI move:', error);
-                // Fallback to random move if API fails
-                const availableColumns = getAvailableColumns(board);
-                const randomColumn = availableColumns[Math.floor(Math.random() * availableColumns.length)];
-                handleColumnClick(randomColumn, true);
+                if (error.name === 'AbortError') {
+                    console.log('AI move request was cancelled');
+                } else {
+                    console.error('Error fetching AI move:', error);
+                    fallbackToRandomMove(board, handleColumnClick);
+                }
             } finally {
                 setAiThinking(false);
                 clearInterval(thinkingIntervalRef.current);
             }
         }, thinkingTime);
-    }, [board, currentPlayer, aiDifficultyRed, aiDifficultyYellow]);
+    }, [board, currentPlayer, aiDifficultyRed, aiDifficultyYellow, cancelAIMove]);
 
     useEffect(() => {
-        return () => {
-            if (aiTimeoutRef.current) {
-                clearTimeout(aiTimeoutRef.current);
-            }
-            if (thinkingIntervalRef.current) {
-                clearInterval(thinkingIntervalRef.current);
-            }
-        };
-    }, []);
+        return cancelAIMove;
+    }, [cancelAIMove]);
 
-    return { aiMove, aiThinking, thinkingTime };
+    return { aiMove, aiThinking, thinkingTime, cancelAIMove };
 };
 
 const getThinkingTime = (difficulty) => {
@@ -104,4 +115,10 @@ const getThinkingTime = (difficulty) => {
         default:
             return 1000;
     }
+};
+
+const fallbackToRandomMove = (board, handleColumnClick) => {
+    const availableColumns = getAvailableColumns(board);
+    const randomColumn = availableColumns[Math.floor(Math.random() * availableColumns.length)];
+    handleColumnClick(randomColumn, true);
 };

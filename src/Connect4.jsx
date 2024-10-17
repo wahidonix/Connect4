@@ -26,9 +26,10 @@ const Connect4 = () => {
     const [winningMove, setWinningMove] = useState(null);
 
     const windowSize = useWindowSize();
-    const { aiMove, aiThinking, thinkingTime } = useAIMove(board, currentPlayer, gameMode, aiDifficultyRed, aiDifficultyYellow);
+    const { aiMove, aiThinking, thinkingTime, cancelAIMove } = useAIMove(board, currentPlayer, gameMode, aiDifficultyRed, aiDifficultyYellow);
 
     const resetGame = () => {
+        cancelAIMove();
         setBoard(Array(ROWS).fill().map(() => Array(COLS).fill(null)));
         setCurrentPlayer('red');
         setWinner(null);
@@ -109,7 +110,7 @@ const Connect4 = () => {
                 aiMove(handleColumnClick);
             }
         }
-    }, [currentPlayer, isAnimating, winner, isDraw, gameMode, isReviewMode]);
+    }, [currentPlayer, isAnimating, winner, isDraw, gameMode, isReviewMode, aiMove]);
 
     useEffect(() => {
         if (isCheatMode && !winner && !isDraw) {
