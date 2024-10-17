@@ -175,7 +175,7 @@ const GameBoard = ({
                         </div>
                     )}
                 </div>
-                {!isMobile && <MoveLog moves={moves} gameMode={gameMode} />}
+                {!isMobile && <MoveLog moves={moves} gameMode={gameMode} winner={winner} isDraw={isDraw} />}
             </div>
             {isMobile && (
                 <>
@@ -189,7 +189,7 @@ const GameBoard = ({
                                 className="modal-content"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <MoveLog moves={moves} gameMode={gameMode} />
+                                <MoveLog moves={moves} gameMode={gameMode} winner={winner} isDraw={isDraw} />
                                 <button onClick={() => setIsMoveLogOpen(false)}>
                                     Close
                                 </button>
