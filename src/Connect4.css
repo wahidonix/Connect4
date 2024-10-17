@@ -1,124 +1,183 @@
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden;
-  }
-  
-  .connect4 {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    width: 100vw;
-    background-color: #f0f4f8;
-  }
-  
-  .main-menu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-  }
-  
+/* Global Styles */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Connect4 Container */
+.connect4 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100vw;
+  background-color: #f0f4f8;
+  flex-direction: column;
+}
+
+/* Main Menu Styles */
+.main-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90%;
+  max-width: 600px;
+  padding: 1rem;
+}
+
+.main-menu h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #2b6cb0; /* Ensure text color is set */
+  text-align: center;
+}
+
+.main-menu h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #2b6cb0; /* Ensure text color is set */
+}
+
+.main-menu label {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #333; /* Set text color for labels */
+}
+
+.main-menu input[type='radio'] {
+  margin-right: 0.5rem;
+}
+
+.main-menu button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.25rem;
+  color: white;
+  background-color: #3182ce;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  width: 100%;
+  max-width: 200px;
+  transition: background-color 0.3s;
+}
+
+.main-menu button:hover {
+  background-color: #2c5282;
+}
+
+/* Game Board Styles */
+.game-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-board h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #2b6cb0;
+  text-align: center;
+}
+
+.board {
+  background-color: #3182ce;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+}
+
+.cell {
+  background-color: #63b3ed;
+  margin: 2px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.piece {
+  border-radius: 50%;
+}
+
+.piece.red {
+  background-color: #e53e3e;
+}
+
+.piece.yellow {
+  background-color: #ecc94b;
+}
+
+.winning-piece {
+  position: absolute;
+  border-radius: 50%;
+  border: 4px solid white;
+ 
+}
+
+.controls {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.controls button {
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  color: white;
+  background-color: #3182ce;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  flex: 1 1 40%;
+  max-width: 200px;
+}
+
+.controls button:hover {
+  background-color: #2c5282;
+}
+
+/* Media Queries for Mobile Devices */
+@media (max-width: 600px) {
   .main-menu h1 {
-    font-size: 5vw;
-    margin-bottom: 2rem;
-    color: #2b6cb0;
+    font-size: 2rem;
   }
-  
+
+  .main-menu h2 {
+    font-size: 1.25rem;
+  }
+
+  .main-menu label {
+    font-size: 0.9rem;
+  }
+
   .main-menu button {
-    margin: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    font-size: 1.5vw;
-    color: white;
-    background-color: #3182ce;
-    border: none;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    font-size: 1rem;
   }
-  
-  .main-menu button:hover {
-    background-color: #2c5282;
-  }
-  
-  .main-menu button:disabled {
-    background-color: #a0aec0;
-    cursor: not-allowed;
-  }
-  
-  .game-board {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-  }
-  
+
   .game-board h2 {
-    font-size: 2vw;
-    margin-bottom: 1rem;
-    color: #2b6cb0;
+    font-size: 1.25rem;
   }
-  
-  .board {
-    background-color: #3182ce;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .row {
-    display: flex;
-  }
-  
-  .cell {
-    background-color: #63b3ed;
-    margin: 2px;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  .piece {
-    border-radius: 50%;
-  }
-  
-  .piece.red {
-    background-color: #e53e3e;
-  }
-  
-  .piece.yellow {
-    background-color: #ecc94b;
-  }
-  
-  .winning-piece {
-    position: absolute;
-    border-radius: 50%;
-    border: 4px solid white;
-  }
-  
-  .controls {
-    margin-top: 1rem;
-  }
-  
+
   .controls button {
-    margin: 0 0.5rem;
-    padding: 0.5rem 1rem;
-    font-size: 1vw;
-    color: white;
-    background-color: #3182ce;
-    border: none;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    font-size: 0.9rem;
   }
-  
-  .controls button:hover {
-    background-color: #2c5282;
+
+  .cell {
+    margin: 1px;
   }
+}
