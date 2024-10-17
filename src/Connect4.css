@@ -368,7 +368,6 @@ body, html {
 .ai-thinking {
   font-style: italic;
   color: #666;
-  margin-top: 0.5em;
   animation: pulse 1.5s infinite;
 }
 

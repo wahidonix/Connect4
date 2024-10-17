@@ -552,9 +552,11 @@ const Connect4 = () => {
                         ? "It's a draw!"
                         : `Current Player: ${getPlayerName(currentPlayer)}`}
                 </h2>
+                <div style={{height: '5`0px'}}>
                 {aiThinking && (
                     <p className="ai-thinking">AI Thinking...{thinkingTime}s</p>
                 )}
+                </div>
                     <div className="game-content">
                         {isReviewMode && (
                             <div className="review-mode">
