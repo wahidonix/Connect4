@@ -25,6 +25,9 @@ const Connect4 = () => {
     const [moves, setMoves] = useState([]);
     const [aiDifficultyRed, setAiDifficultyRed] = useState('easy');
     const [aiDifficultyYellow, setAiDifficultyYellow] = useState('easy');
+    const [aiThinking, setAiThinking] = useState(false);
+    const [thinkingTime, setThinkingTime] = useState(0);
+    const thinkingIntervalRef = useRef(null);
     const aiTimeoutRef = useRef(null);
 
     const [moveHistory, setMoveHistory] = useState([]);
@@ -192,6 +195,12 @@ const Connect4 = () => {
     };
 
     const aiMove = () => {
+        setAiThinking(true);
+        setThinkingTime(0);
+        thinkingIntervalRef.current = setInterval(() => {
+            setThinkingTime(prevTime => prevTime + 1);
+        }, 1000);
+
         aiTimeoutRef.current = setTimeout(async () => {
             try {
                 let aiDifficulty;
@@ -207,7 +216,7 @@ const Connect4 = () => {
                 }
 
                 const response = await fetch(
-                    'http://localhost:5000/ai-move',
+                    'https://connect4-api.vahidr.com/ai-move',
                     {
                         method: 'POST',
                         headers: {
@@ -229,6 +238,9 @@ const Connect4 = () => {
                 }
             } catch (error) {
                 console.error('Error fetching AI move:', error);
+            } finally {
+                setAiThinking(false);
+                clearInterval(thinkingIntervalRef.current);
             }
         }, 500);
     };
@@ -249,6 +261,9 @@ const Connect4 = () => {
             if (aiTimeoutRef.current) {
                 clearTimeout(aiTimeoutRef.current);
                 aiTimeoutRef.current = null;
+            }
+            if (thinkingIntervalRef.current) {
+                clearInterval(thinkingIntervalRef.current);
             }
         };
     }, [currentPlayer, isAnimating, winner, isDraw, gameMode, isReviewMode]);
@@ -530,13 +545,16 @@ const Connect4 = () => {
         
             return (
                 <div className="game-board">
-                    <h2>
-                        {winner
-                            ? `${getPlayerName(winner)} Wins!`
-                            : isDraw
-                            ? "It's a draw!"
-                            : `Current Player: ${getPlayerName(currentPlayer)}`}
-                    </h2>
+                <h2>
+                    {winner
+                        ? `${getPlayerName(winner)} Wins!`
+                        : isDraw
+                        ? "It's a draw!"
+                        : `Current Player: ${getPlayerName(currentPlayer)}`}
+                </h2>
+                {aiThinking && (
+                    <p className="ai-thinking">AI Thinking...{thinkingTime}s</p>
+                )}
                     <div className="game-content">
                         {isReviewMode && (
                             <div className="review-mode">
