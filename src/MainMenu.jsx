@@ -32,6 +32,7 @@ const MainMenu = ({
     return (
         <div className="main-menu">
             <h1>Connect 4</h1>
+            <div className='main-menu-container'>
             <div className="game-mode-selection">
                 <h2>Select Game Mode:</h2>
                 <label>
@@ -72,8 +73,10 @@ const MainMenu = ({
                 </>
             )}
 
+        </div>
             <button className="start-game-button" onClick={startGame}>Start Game</button>
         </div>
+        
     );
 };
 
