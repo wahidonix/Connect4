@@ -20,8 +20,11 @@ const Connect4 = () => {
         height: window.innerHeight,
     });
     const [isAnimating, setIsAnimating] = useState(false);
-    const [aiDifficulty, setAiDifficulty] = useState('easy');
     const [selectedGameMode, setSelectedGameMode] = useState('pvp');
+
+    // Separate AI difficulties for red and yellow AIs
+    const [aiDifficultyRed, setAiDifficultyRed] = useState('easy');
+    const [aiDifficultyYellow, setAiDifficultyYellow] = useState('easy');
 
     // Ref to store the AI timeout ID
     const aiTimeoutRef = useRef(null);
@@ -163,6 +166,19 @@ const Connect4 = () => {
     const aiMove = () => {
         aiTimeoutRef.current = setTimeout(async () => {
             try {
+                // Determine the AI difficulty based on the current player and game mode
+                let aiDifficulty;
+                if (gameMode === 'pve') {
+                    aiDifficulty = aiDifficultyYellow; // AI is yellow
+                } else if (gameMode === 'eve') {
+                    aiDifficulty =
+                        currentPlayer === 'red'
+                            ? aiDifficultyRed
+                            : aiDifficultyYellow;
+                } else {
+                    aiDifficulty = 'easy'; // Default difficulty
+                }
+
                 const response = await fetch(
                     'http://localhost:5000/ai-move',
                     {
@@ -244,15 +260,16 @@ const Connect4 = () => {
                     AI vs AI
                 </label>
             </div>
-            {(selectedGameMode === 'pve' || selectedGameMode === 'eve') && (
+
+            {selectedGameMode === 'pve' && (
                 <div className="ai-difficulty-selection">
                     <h2>Select AI Difficulty:</h2>
                     <label>
                         <input
                             type="radio"
                             value="easy"
-                            checked={aiDifficulty === 'easy'}
-                            onChange={() => setAiDifficulty('easy')}
+                            checked={aiDifficultyYellow === 'easy'}
+                            onChange={() => setAiDifficultyYellow('easy')}
                         />
                         Easy
                     </label>
@@ -260,8 +277,8 @@ const Connect4 = () => {
                         <input
                             type="radio"
                             value="medium"
-                            checked={aiDifficulty === 'medium'}
-                            onChange={() => setAiDifficulty('medium')}
+                            checked={aiDifficultyYellow === 'medium'}
+                            onChange={() => setAiDifficultyYellow('medium')}
                         />
                         Medium
                     </label>
@@ -269,8 +286,8 @@ const Connect4 = () => {
                         <input
                             type="radio"
                             value="hard"
-                            checked={aiDifficulty === 'hard'}
-                            onChange={() => setAiDifficulty('hard')}
+                            checked={aiDifficultyYellow === 'hard'}
+                            onChange={() => setAiDifficultyYellow('hard')}
                         />
                         Hard
                     </label>
@@ -278,13 +295,102 @@ const Connect4 = () => {
                         <input
                             type="radio"
                             value="expert"
-                            checked={aiDifficulty === 'expert'}
-                            onChange={() => setAiDifficulty('expert')}
+                            checked={aiDifficultyYellow === 'expert'}
+                            onChange={() => setAiDifficultyYellow('expert')}
                         />
                         Expert
                     </label>
                 </div>
             )}
+
+            {selectedGameMode === 'eve' && (
+                <div className="ai-difficulty-selection">
+                    <h2>Select Red AI Difficulty:</h2>
+                    <label>
+                        <input
+                            type="radio"
+                            name="aiDifficultyRed"
+                            value="easy"
+                            checked={aiDifficultyRed === 'easy'}
+                            onChange={() => setAiDifficultyRed('easy')}
+                        />
+                        Easy
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="aiDifficultyRed"
+                            value="medium"
+                            checked={aiDifficultyRed === 'medium'}
+                            onChange={() => setAiDifficultyRed('medium')}
+                        />
+                        Medium
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="aiDifficultyRed"
+                            value="hard"
+                            checked={aiDifficultyRed === 'hard'}
+                            onChange={() => setAiDifficultyRed('hard')}
+                        />
+                        Hard
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="aiDifficultyRed"
+                            value="expert"
+                            checked={aiDifficultyRed === 'expert'}
+                            onChange={() => setAiDifficultyRed('expert')}
+                        />
+                        Expert
+                    </label>
+
+                    <h2>Select Yellow AI Difficulty:</h2>
+                    <label>
+                        <input
+                            type="radio"
+                            name="aiDifficultyYellow"
+                            value="easy"
+                            checked={aiDifficultyYellow === 'easy'}
+                            onChange={() => setAiDifficultyYellow('easy')}
+                        />
+                        Easy
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="aiDifficultyYellow"
+                            value="medium"
+                            checked={aiDifficultyYellow === 'medium'}
+                            onChange={() => setAiDifficultyYellow('medium')}
+                        />
+                        Medium
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="aiDifficultyYellow"
+                            value="hard"
+                            checked={aiDifficultyYellow === 'hard'}
+                            onChange={() => setAiDifficultyYellow('hard')}
+                        />
+                        Hard
+                    </label>
+                    <label>
+                        <input
+                            type="radio"
+                            name="aiDifficultyYellow"
+                            value="expert"
+                            checked={aiDifficultyYellow === 'expert'}
+                            onChange={() => setAiDifficultyYellow('expert')}
+                        />
+                        Expert
+                    </label>
+                </div>
+            )}
+
             <button
                 onClick={() => {
                     resetGame();
